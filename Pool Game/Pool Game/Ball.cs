@@ -11,11 +11,14 @@ namespace Pool_Game
         public float xPos, yPos;
         public float xSpeed, ySpeed;
         private float radius;
-        private float mass = 0.15F;
+        private float mass = 1F;
         private float xDist, yDist;
         public bool inPlay = false;
-
-        public Ball(float x,float y,float xS,float yS, float r, bool inPlay)
+        private float ballForcex = 0;
+        private float ballForcey = 0;
+        private float accelerationY;
+        
+        public Ball(float x,float y,float xS,float yS, float r, bool inPlay, float acceleration)
         {
             xPos = x;
             yPos = y;
@@ -23,12 +26,20 @@ namespace Pool_Game
             ySpeed = yS;
             radius = r;
             this.inPlay = inPlay;//check if ball is in use
+            accelerationY = acceleration;
         }
         //collision with wall and speeds
-        public void UpdateVars(float TopWall, float BotWall,float LeftWall, float RightWall, float padPosy)//updates ball's position 
+        public void UpdateVars(float TopWall, float BotWall,float LeftWall, float RightWall, float padPosy,float gravity)//updates ball's position 
         {
+            accelerationY += gravity;
+            ballForcey += accelerationY;
+            accelerationY = ballForcey / -mass;
+
             xPos = xPos + xSpeed;//add friction here for pool game
-            yPos = yPos + ySpeed;//these update the balls position each frame, according to speed.
+            
+            ySpeed -=  accelerationY;
+
+            yPos +=  ySpeed;// (ySpeed + timeCount * acceleration/2);//these update the balls position each frame, according to speed.
             if (xPos > RightWall -radius)//too far right
             {
                 xPos = RightWall - radius;
@@ -69,28 +80,20 @@ namespace Pool_Game
             if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getLL() && xPos + radius < pad.getML()))//if left area
             {//bounce back or up(goes back if hit on the side because of xSpeed changed to 0, and next frame still in same "x" of area, so goes back.
                 xSpeed = xSpeed > 0 ? 0 : -iSpeed;
-                ySpeed = -iSpeed;
+                ballForcey = -accelerationY;
+                ySpeed = -ySpeed;
             }
             else if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getML() && xPos - radius <= pad.getMR()))
             {//bounce MIDDLE
-                if(xSpeed > 0)
-                {
-                    xSpeed = iSpeed;
-                }
-                else if(xSpeed <0)
-                {
-                    xSpeed = -iSpeed;//so that the speed gets reset when you hit the pad.
-                }
-                else if(xSpeed == 0)
-                {
-                    xSpeed = 0;
-                }
-                ySpeed = -iSpeed;
+                
+                ballForcey = -accelerationY;
+                ySpeed = -ySpeed;
             }
             else if((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos - radius > pad.getMR() && xPos - radius <= pad.getRR()))
             {//bounce back or up
                 xSpeed = xSpeed < 0 ? 0 : iSpeed;
-                ySpeed = -iSpeed;
+                ballForcey = -accelerationY;
+                ySpeed = - ySpeed;
             }   
         }
         //brick collision
@@ -111,7 +114,7 @@ namespace Pool_Game
                 return false;
             }
         }
-        public void calculateBrickCollision(Ball ball)//this should not run on next frame, or balls will return. 
+        public void calculateBrickCollision(Brick brick)//this should not run on next frame, or balls will return. 
         {
             double collisionTangent = Math.Atan2((double)yDist, (double)xDist); //returns the angle of the tangent of the vector which is the collision x and y distance.
             double sin = Math.Sin(collisionTangent);
@@ -123,15 +126,15 @@ namespace Pool_Game
             double B1x = xDist * cos + yDist * sin;//RELATIVE TO BALL 0!!!
             double B1y = yDist * cos - xDist * sin;
             //rotate ball 0 velocity
-            double V0x = 0;
-            double V0y = 0;
-            //rotate ball 1 velocity
-            double V1x = ball.xSpeed * cos + ball.ySpeed * sin;
-            double V1y = ball.ySpeed * cos - ball.xSpeed * sin;
+            double V0x = xSpeed * cos + ySpeed * sin;
+            double V0y = ySpeed * cos - xSpeed * sin;
+            //rotate brick 1 velocity
+            double V1x = 0;
+            double V1y = 0;
 
             //collision reaction ELASTISK LIGNING I BOKA?, tror denne gjør at de ikke setter seg fast, må plusse på noe ekstra? eller ikke siden det er vel.
             double vxtotal = V0x - V1x;
-            V0x = ((mass - ball.getMass()) * V0x + 2 * ball.getMass() * V1x) / (mass + ball.getMass());//new velocity x ball 1
+            V0x = ((mass - brick.getMass()) * V0x + 2 * brick.getMass() * V1x) / (mass + brick.getMass());//new velocity x ball 1
             V1x = vxtotal + V0x; //new velocity x ball 2
             //update position, THIS ONE IS RELATIVE TO MID BALL 0 and BALL 1
             B0x += V0x;
@@ -151,20 +154,21 @@ namespace Pool_Game
             double B1newVely = V1y * cos + V1x * sin;
 
             //update pos
-            ball.xPos = xPos + (float)B1newPosx;//is this just to set it out of the other balls radius?
-            ball.yPos = yPos + (float)B1newPosy;
-            //xPos = xPos + (float)B0newPosx;//these 4 new positions will be a little "bigger" than when they entered. this is so that they wont stick. also, they point slightly away from each other.
-            //yPos = yPos + (float)B0newPosy;
+            //brick.xPos = xPos + (float)B1newPosx;//is this just to set it out of the other balls radius?
+            //brick.yPos = yPos + (float)B1newPosy;
+            xPos = xPos + (float)B0newPosx;//these 4 new positions will be a little "bigger" than when they entered. this is so that they wont stick. also, they point slightly away from each other.
+            yPos = yPos + (float)B0newPosy;
 
             //update vel - I WANT THEM TO HAVE PERMANENT SPEEDS if not, I can rearrange the code again.
             //xSpeed = (float)B0newVelx > 0 ? 2 : -2;
             xSpeed = (float)B0newVelx;
             //ySpeed = (float)B0newVely > 0 ? 2 : -2;
             ySpeed = (float)B0newVely;
+            
             //ball.setXspeed((float)B1newVelx > 0 ? 2 : -2);
-            //ball.setXspeed((float)B1newVelx);
+            //brick.setXspeed((float)B1newVelx);
             //ball.setYspeed((float)B1newVely > 0 ? 2 : -2);
-            //ball.setYspeed((float)B1newVely);
+            //brick.setYspeed((float)B1newVely);
         }
         /*public bool checkBrickCollision(Brick b, float iSpeed, bool isAlive)
         {//2.1F is for accuracy, so the balls wont skip collision detection and venture into the brick.
@@ -278,31 +282,38 @@ namespace Pool_Game
             //otherBall.setXspeed((float)B1newVelx);
             otherBall.setYspeed((float)B1newVely > 0 ? 2 : -2);
             //otherBall.setYspeed((float)B1newVely);
-            
+
+            while (checkBallCollision(otherBall))//check if the balls are still colliding.
+            {
+                otherBall.xPos +=  (float)B1newVelx;
+                otherBall.yPos += (float)B1newVely;
+                xPos = xPos + (float)B0newVelx;
+                yPos = yPos + (float)B0newVely;
+            }
 
 
 
-           /* //old velocity
-            double V0Ball1x = xSpeed * cos;
-            double V0Ball1y = ySpeed * sin;
-            double V0Ball2x = otherBall.getXspeed() * cos;
-            double V0Ball2y = otherBall.getYspeed() * sin;
+            /* //old velocity
+             double V0Ball1x = xSpeed * cos;
+             double V0Ball1y = ySpeed * sin;
+             double V0Ball2x = otherBall.getXspeed() * cos;
+             double V0Ball2y = otherBall.getYspeed() * sin;
 
-            //new velocity
-            double V1Ball1x = ((mass - otherBall.getMass()) / (mass + otherBall.getMass())) * V0Ball1x + (2 * otherBall.getMass() / (mass + otherBall.getMass())) * V0Ball2x;
-            double V1Ball1y = (2 * mass / (mass + otherBall.getMass())) * V0Ball1x + ((otherBall.getMass() - mass) / (otherBall.getMass() + mass)) * V0Ball2x;
-            double V1Ball2x = V0Ball1y;
-            double V1Ball2y = V0Ball2y;
+             //new velocity
+             double V1Ball1x = ((mass - otherBall.getMass()) / (mass + otherBall.getMass())) * V0Ball1x + (2 * otherBall.getMass() / (mass + otherBall.getMass())) * V0Ball2x;
+             double V1Ball1y = (2 * mass / (mass + otherBall.getMass())) * V0Ball1x + ((otherBall.getMass() - mass) / (otherBall.getMass() + mass)) * V0Ball2x;
+             double V1Ball2x = V0Ball1y;
+             double V1Ball2y = V0Ball2y;
 
-            //set new velocity
-            xSpeed = (float)V1Ball1x;
-            ySpeed = (float)V1Ball1y;
-            xPos += xSpeed *3;
-            yPos += ySpeed *3;
-            otherBall.setXspeed((float)V1Ball2x);
-            otherBall.setYspeed((float)V1Ball2y);
-            otherBall.xPos += otherBall.xSpeed * 5;
-            otherBall.yPos += otherBall.ySpeed *5;*/
+             //set new velocity
+             xSpeed = (float)V1Ball1x;
+             ySpeed = (float)V1Ball1y;
+             xPos += xSpeed *3;
+             yPos += ySpeed *3;
+             otherBall.setXspeed((float)V1Ball2x);
+             otherBall.setYspeed((float)V1Ball2y);
+             otherBall.xPos += otherBall.xSpeed * 5;
+             otherBall.yPos += otherBall.ySpeed *5;*/
         }
 
 
@@ -339,6 +350,19 @@ namespace Pool_Game
         public void setYspeed(float ySp)
         {
             ySpeed = ySp;
+        }
+        public void setForce(float force)
+        {
+            this.ballForcey = force;
+        }
+        public float getForce()
+        {
+            return ballForcey;
+        }
+        public void setGravity(float acceleration)
+        {
+            accelerationY = acceleration;
+
         }
     }
 }

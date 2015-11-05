@@ -19,19 +19,20 @@ namespace Pool_Game
         private static float rightWall = 1000;//x
         private static float padMidPos = rightWall / 2;
         private static float padPosy = 530;
-        private static float padHeight = 5;
+        private static float padHeight = 15;
+        private static float gravity = .5981F;
+        private float firstBallTempGravity = 0;
 
         private float brickGroupPosX = 150;
         private float brickGroupPosY = 100;
         private float brickRadius = 10F;
-        private float brickDistanceX = 30;
-        private float brickDistanceY = 30;
+        private float brickDistanceX = 50;
+        private float brickDistanceY = 50;
         int normal = 0;
         int doubleBall = 1;
         int slowBalls = 2;
         int fastBalls = 3;
         public Timer Timer1 = new Timer();//create timer
-        public float ballspeed = 2F;// the SPEED the balls are set to!
         float radius =6F;//radius of all the balls
         
         Ball[] Ballz = new Ball[5];
@@ -49,15 +50,24 @@ namespace Pool_Game
         static Panel midCanvas = new Panel();
         static Label score = new Label();
         static Label simSpeedLabel = new Label();
+        int simSpeed = 50;
         static Label ballSpeedLabel = new Label();
+        int ballspeed = 2;
+        static Label forceValLabel = new Label();
+        int forceVal = 7;
+        static Label gravityValLabel = new Label();
+        float gravityVal = 0.05F;
+
         Button restartButton = new Button();
         Button startButton = new Button();
         Button pauseButton = new Button();
         Button resumeButton = new Button();
         Button simSpeedButton = new Button();
 
-        TextBox Textbox1 = new TextBox();
-        TextBox Textbox2 = new TextBox();
+        TextBox setSimSpeed = new TextBox();
+        TextBox setBallSpeed = new TextBox();
+        TextBox setForceVall = new TextBox();
+        TextBox setGravityVal = new TextBox();
 
         Label ballLabels = new Label();
         Label ball0Vars = new Label();
@@ -105,7 +115,7 @@ namespace Pool_Game
             for (int b = 0; b < Ballz.Length; b++)
             {
                 if (Ballz[b].inPlay)
-                    Ballz[b].UpdateVars(topWall, botWall, leftWall, rightWall, padPosy);
+                    Ballz[b].UpdateVars(topWall, botWall, leftWall, rightWall, padPosy, firstBallTempGravity);
                 else
                 {
                     Ballz[b].setXspeed(0);
@@ -115,6 +125,7 @@ namespace Pool_Game
             if (!hasStarted)//sets ball position to paddle position before game has started
                 Ballz[0].xPos = pad.getX();
 
+            drawing.Clear(Canvas.BackColor);
             updateBotPanelValues();
             drawBalls(drawing);
             drawPad(drawing);
@@ -139,9 +150,10 @@ namespace Pool_Game
                 }
                 for (int b = 0; b < Brickz.Length; b++)
                 {//check collisions with BRICKS
-                    if(Brickz[b].checkBallCollision(Ballz[f]))//må endre til ballz.checkcollision.
+                    if(Ballz[f].checkBrickCollision(Brickz[b]))//må endre til ballz.checkcollision.
                     {// there is a collision
-                        Brickz[b].calculateBrickCollision(Ballz[f]);
+
+                        Ballz[f].calculateBrickCollision(Brickz[b]);
                         Brickz[b].isAlive = false;
                         numBricksDestroyed += 1;
                         score.Text = numBricksDestroyed.ToString();
@@ -165,7 +177,7 @@ namespace Pool_Game
         public void drawBalls(Graphics drawing)
         {
             
-            drawing.Clear(Canvas.BackColor);
+           
             for(int b = 0; b < numBallsActive; b++)//can be removed if drawBalls() is put in for loop
                 switch(b)
                 {
@@ -253,12 +265,12 @@ namespace Pool_Game
 
         public void InitializeBallz()
         {
-            Ballz[0] = new Ball(pad.getX(), padPosy-10, 0, 0, radius, true);//xPos, yPos, xSpeed,  ySpeed, radius, inPlay
-            Ballz[1] = new Ball(1000, botWall - radius, 0, 0, radius, false);
+            Ballz[0] = new Ball(pad.getX(), padPosy-10, 0, 0, radius, true, 0);//xPos, yPos, xSpeed,  ySpeed, radius, inPlay
+            Ballz[1] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
             
-            Ballz[2] = new Ball(1000, botWall - radius, 0, 0, radius, false);
-            Ballz[3] = new Ball(1000, botWall - radius, 0, 0, radius, false);
-            Ballz[4] = new Ball(1000, botWall - radius, 0, 0, radius, false);
+            Ballz[2] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
+            Ballz[3] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
+            Ballz[4] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
         }
 
         //drop a new ball from CheckCollision()
@@ -269,7 +281,7 @@ namespace Pool_Game
             {
                 if(!Ballz[count].inPlay)
                 {
-                    Ballz[count] = new Ball(Brickz[b].getX(),Brickz[b].getY(), Ballz[f].getXspeed() , Ballz[f].getYspeed(), radius, true);
+                    Ballz[count] = new Ball(Brickz[b].getX(),Brickz[b].getY(), Ballz[f].getXspeed() , Ballz[f].getYspeed(), radius, true, gravity);
                     numBallsActive += 1;
                     count = Ballz.Length;
                 }
@@ -285,13 +297,17 @@ namespace Pool_Game
             score.Text = "0";
             numBricksDestroyed = 0;//resets score
             hasStarted = false;//stops game
+            firstBallTempGravity = 0;
         }
         public void StartButton(object sender, EventArgs e)
         {
-            ballspeed = Int32.Parse(Textbox2.Text);
-            Timer1.Interval = Int32.Parse(Textbox1.Text);//get string from textbox to the timer interval to set simulation speed.
+            ballspeed = Int32.Parse(setBallSpeed.Text);//set minus for accuracy with canvas. + is -
+            Timer1.Interval = Int32.Parse(setSimSpeed.Text);//get string from textbox to the timer interval to set simulation speed.
+            forceVal = - Int32.Parse(setForceVall.Text);// set minus for accuracy with canvas. + is -
+            gravity =  float.Parse(setGravityVal.Text);
             Ballz[0].setXspeed(ballspeed);
-            Ballz[0].setYspeed(-ballspeed);
+            Ballz[0].setForce(forceVal);
+            firstBallTempGravity = gravity;
             hasStarted = true;
         }
         public void pauseGame(object sender, EventArgs e)
@@ -313,18 +329,34 @@ namespace Pool_Game
             simSpeedLabel.Top = 0;
             simSpeedLabel.Text = "Sim Speed:";
 
-            Textbox1.Top = 15;
-            Textbox1.Left = 1;
-            Textbox1.Width = 65;
-            Textbox1.Text = "10";
+            setSimSpeed.Top = 15;
+            setSimSpeed.Left = 1;
+            setSimSpeed.Width = 65;
+            setSimSpeed.Text = simSpeed.ToString() ;
 
             ballSpeedLabel.Top = 40;
-            ballSpeedLabel.Text = "Ball Speed:";
+            ballSpeedLabel.Text = "Ball x Speed:";
 
-            Textbox2.Top = 55;
-            Textbox2.Left = 1;
-            Textbox2.Width = 65;
-            Textbox2.Text = "2";
+            setBallSpeed.Top = 55;
+            setBallSpeed.Left = 1;
+            setBallSpeed.Width = 65;
+            setBallSpeed.Text = ballspeed.ToString();
+
+            forceValLabel.Top = 80;
+            forceValLabel.Text = "Ball Force:";
+
+            setForceVall.Top = 95;
+            setForceVall.Left = 1;
+            setForceVall.Width = 65;
+            setForceVall.Text = forceVal.ToString();
+
+            gravityValLabel.Top = 120;
+            gravityValLabel.Text = "Gravity: ";
+
+            setGravityVal.Top = 135;
+            setGravityVal.Left = 1;
+            setGravityVal.Width = 65;
+            setGravityVal.Text = gravityVal.ToString();
 
             startButton.Top = 480;
             startButton.Left = 1;
@@ -356,10 +388,20 @@ namespace Pool_Game
             score.Left = 965;
             score.Text = numBricksDestroyed.ToString();
 
-            sideCanvas.Controls.Add(Textbox2);
+
+            //first gets put on top of the others
+            sideCanvas.Controls.Add(setGravityVal);
+            sideCanvas.Controls.Add(gravityValLabel);
+            sideCanvas.Controls.Add(setForceVall);
+            sideCanvas.Controls.Add(forceValLabel);
+            sideCanvas.Controls.Add(setBallSpeed);
             sideCanvas.Controls.Add(ballSpeedLabel);
-            sideCanvas.Controls.Add(Textbox1);
+            sideCanvas.Controls.Add(setSimSpeed);
             sideCanvas.Controls.Add(simSpeedLabel);
+
+            
+            
+            
             sideCanvas.Controls.Add(restartButton);
             sideCanvas.Controls.Add(startButton);
             sideCanvas.Controls.Add(pauseButton);
@@ -397,11 +439,11 @@ namespace Pool_Game
         public void updateBotPanelValues()
         {
             
-         ball0Vars.Text = "x position: " + (int)Ballz[0].getX() + "\ny position: " + (int)Ballz[0].getY() + "\nmass:        " + Ballz[0].getMass() + "\nx speed:    " + Ballz[0].getXspeed() + "\ny speed:    " + Ballz[0].getYspeed(); 
-         ball1Vars.Text = "x position: " + (int)Ballz[1].getX() + "\ny position: " + (int)Ballz[1].getY() + "\nmass:        " + Ballz[1].getMass() + "\nx speed:    " + Ballz[1].getXspeed() + "\ny speed:    " + Ballz[1].getYspeed(); 
-         ball2Vars.Text = "x position: " + (int)Ballz[2].getX() + "\ny position: " + (int)Ballz[2].getY() + "\nmass:        " + Ballz[2].getMass() + "\nx speed:    " + Ballz[2].getXspeed() + "\ny speed:    " + Ballz[2].getYspeed(); 
-         ball3Vars.Text = "x position: " + (int)Ballz[3].getX() + "\ny position: " + (int)Ballz[3].getY() + "\nmass:        " + Ballz[3].getMass() + "\nx speed:    " + Ballz[3].getXspeed() + "\ny speed:    " + Ballz[3].getYspeed(); 
-         ball4Vars.Text = "x position: " + (int)Ballz[4].getX() + "\ny position: " + (int)Ballz[4].getY() + "\nmass:        " + Ballz[4].getMass() + "\nx speed:    " + Ballz[4].getXspeed() + "\ny speed:    " + Ballz[4].getYspeed(); 
+         ball0Vars.Text = "x position: " + (int)Ballz[0].getX() + "\ny position: " + (int)Ballz[0].getY() + "\nmass:        " + Ballz[0].getMass() + "\nx speed:    " + (int)Ballz[0].getXspeed() + "\ny speed:    " + -(int)Ballz[0].getYspeed() + "\nG Force:   " + Ballz[0].getForce(); 
+         ball1Vars.Text = "x position: " + (int)Ballz[1].getX() + "\ny position: " + (int)Ballz[1].getY() + "\nmass:        " + Ballz[1].getMass() + "\nx speed:    " + (int)Ballz[1].getXspeed() + "\ny speed:    " + -(int)Ballz[1].getYspeed() + "\nG Force:   " + Ballz[0].getForce(); 
+         ball2Vars.Text = "x position: " + (int)Ballz[2].getX() + "\ny position: " + (int)Ballz[2].getY() + "\nmass:        " + Ballz[2].getMass() + "\nx speed:    " + (int)Ballz[2].getXspeed() + "\ny speed:    " + -(int)Ballz[2].getYspeed() + "\nG Force:   " + Ballz[0].getForce(); 
+         ball3Vars.Text = "x position: " + (int)Ballz[3].getX() + "\ny position: " + (int)Ballz[3].getY() + "\nmass:        " + Ballz[3].getMass() + "\nx speed:    " + (int)Ballz[3].getXspeed() + "\ny speed:    " + -(int)Ballz[3].getYspeed() + "\nG Force:   " + Ballz[0].getForce(); 
+         ball4Vars.Text = "x position: " + (int)Ballz[4].getX() + "\ny position: " + (int)Ballz[4].getY() + "\nmass:        " + Ballz[4].getMass() + "\nx speed:    " + (int)Ballz[4].getXspeed() + "\ny speed:    " + -(int)Ballz[4].getYspeed() + "\nG Force:   " + Ballz[0].getForce(); 
         
         }
         public void InitializeGUI()
