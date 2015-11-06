@@ -33,14 +33,25 @@ namespace Pool_Game
         {
             accelerationY += gravity;
             ballForcey += accelerationY;
-            accelerationY = ballForcey / -mass;
+            accelerationY = ballForcey / -mass; //adding gravity/acceleration to game
 
-            xPos = xPos + xSpeed;//add friction here for pool game
+            if(Math.Abs(xSpeed) > 12)//speed limit
+            {
+                xSpeed = xSpeed > 0 ? 12 : -12;
+            }
+            xPos += xSpeed;//add friction here for pool game
             
-            ySpeed -=  accelerationY;
+            ySpeed -=  accelerationY; //adding acceleration to movement
 
-            yPos +=  ySpeed;// (ySpeed + timeCount * acceleration/2);//these update the balls position each frame, according to speed.
-            if (xPos > RightWall -radius)//too far right
+            if (Math.Abs(ySpeed) > 12)//speed limit
+            {
+                ySpeed = ySpeed >= 0 ? 12 : -12;
+            }
+            yPos +=  ySpeed;
+            //these update the balls position each frame, according to speed.
+
+
+            if (xPos > RightWall -radius)//too far right(wall)
             {
                 xPos = RightWall - radius;
                 xSpeed = -xSpeed;
@@ -77,23 +88,30 @@ namespace Pool_Game
         //check pad colliding with ball
         public void checkPadCollision(Paddle pad, float iSpeed)
         {                                 //ball in yAxis inside pad                                                              //ball in xAxis  between points
-            if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getLL() && xPos + radius < pad.getML()))//if left area
+            if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos - radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getLL() && xPos < pad.getML()))//if left area
             {//bounce back or up(goes back if hit on the side because of xSpeed changed to 0, and next frame still in same "x" of area, so goes back.
-                xSpeed = xSpeed > 0 ? 0 : -iSpeed;
+                xSpeed += -iSpeed * 1.5F;
+                xSpeed = xSpeed < -12 ? -12 : xSpeed * 1.5F;
+
                 ballForcey = -accelerationY;
-                ySpeed = -ySpeed;
+                ySpeed = ySpeed > 12 ? -12 : -ySpeed * 1.5F;
             }
-            else if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getML() && xPos - radius <= pad.getMR()))
+             if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getML() && xPos - radius <= pad.getMR()))
             {//bounce MIDDLE
-                
+                if (ySpeed < iSpeed )
+                    ySpeed = iSpeed;
+
                 ballForcey = -accelerationY;
                 ySpeed = -ySpeed;
             }
-            else if((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos - radius > pad.getMR() && xPos - radius <= pad.getRR()))
+             if((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos - radius <= pad.getY() + pad.getHeight()/2) && (xPos > pad.getMR() && xPos - radius <= pad.getRR()))
             {//bounce back or up
-                xSpeed = xSpeed < 0 ? 0 : iSpeed;
+                xSpeed += iSpeed * 1.5F;
+                xSpeed = xSpeed > 12 ? 12 : xSpeed * 1.5F;
+
                 ballForcey = -accelerationY;
-                ySpeed = - ySpeed;
+                ySpeed = ySpeed > 12 ? -12 : -ySpeed * 1.5F;
+                
             }   
         }
         //brick collision
@@ -274,22 +292,22 @@ namespace Pool_Game
             yPos = yPos + (float)B0newPosy;
 
             //update vel - I WANT THEM TO HAVE PERMANENT SPEEDS if not, I can rearrange the code again.
-            xSpeed = (float)B0newVelx > 0 ? 2 : -2;
-            //xSpeed = (float)B0newVelx;
-            ySpeed = (float)B0newVely > 0 ? 2 : -2;
-            //ySpeed = (float)B0newVely;
-            otherBall.setXspeed((float)B1newVelx > 0 ? 2 : -2);
-            //otherBall.setXspeed((float)B1newVelx);
-            otherBall.setYspeed((float)B1newVely > 0 ? 2 : -2);
-            //otherBall.setYspeed((float)B1newVely);
+            //xSpeed = (float)B0newVelx > 0 ? 2 : -2;
+            xSpeed = (float)B0newVelx;
+            //ySpeed = (float)B0newVely > 0 ? 2 : -2;
+            ySpeed = (float)B0newVely;
+            //otherBall.setXspeed((float)B1newVelx > 0 ? 2 : -2);
+            otherBall.setXspeed((float)B1newVelx);
+            //otherBall.setYspeed((float)B1newVely > 0 ? 2 : -2);
+            otherBall.setYspeed((float)B1newVely);
 
-            while (checkBallCollision(otherBall))//check if the balls are still colliding.
+            /*while (checkBallCollision(otherBall))//check if the balls are still colliding.
             {
-                otherBall.xPos +=  (float)B1newVelx;
-                otherBall.yPos += (float)B1newVely;
-                xPos = xPos + (float)B0newVelx;
-                yPos = yPos + (float)B0newVely;
-            }
+                otherBall.xPos +=  (float)B1newPosx;
+                otherBall.yPos += (float)B1newPosy;
+                xPos = xPos + (float)B0newPosx;
+                yPos = yPos + (float)B0newPosy;
+            }*/
 
 
 

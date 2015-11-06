@@ -36,8 +36,8 @@ namespace Pool_Game
         {
             leftEndL = x - 50;
             //leftEndR = x - 30;//remove
-            middleL = x - 25;
-            middleR = x + 25;
+            middleL = x - 40;
+            middleR = x + 40;
             //rightEndL = x + 30;//remove
             rightEndR = x + 50;
         }
