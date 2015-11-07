@@ -14,7 +14,6 @@ namespace Pool_Game
         private float mass = 1F;
         private float xDist, yDist;
         public bool inPlay = false;
-        private float ballForcex = 0;
         private float ballForcey = 0;
         private float accelerationY;
         
@@ -71,8 +70,7 @@ namespace Pool_Game
                 {
                     xSpeed = 5;
                 }
-                
-                
+   
             }
             if (yPos <= TopWall +radius)//too far up
             {
@@ -172,60 +170,13 @@ namespace Pool_Game
             double B1newVely = V1y * cos + V1x * sin;
 
             //update pos
-            //brick.xPos = xPos + (float)B1newPosx;//is this just to set it out of the other balls radius?
-            //brick.yPos = yPos + (float)B1newPosy;
-            xPos = xPos + (float)B0newPosx;//these 4 new positions will be a little "bigger" than when they entered. this is so that they wont stick. also, they point slightly away from each other.
+            xPos = xPos + (float)B0newPosx;//these 2 new positions will be a little "bigger" than when they entered. this is so that they wont stick. also, they point slightly away from each other.
             yPos = yPos + (float)B0newPosy;
 
-            //update vel - I WANT THEM TO HAVE PERMANENT SPEEDS if not, I can rearrange the code again.
-            //xSpeed = (float)B0newVelx > 0 ? 2 : -2;
+            //update speed
             xSpeed = (float)B0newVelx;
-            //ySpeed = (float)B0newVely > 0 ? 2 : -2;
             ySpeed = (float)B0newVely;
-            
-            //ball.setXspeed((float)B1newVelx > 0 ? 2 : -2);
-            //brick.setXspeed((float)B1newVelx);
-            //ball.setYspeed((float)B1newVely > 0 ? 2 : -2);
-            //brick.setYspeed((float)B1newVely);
         }
-        /*public bool checkBrickCollision(Brick b, float iSpeed, bool isAlive)
-        {//2.1F is for accuracy, so the balls wont skip collision detection and venture into the brick.
-            if (isAlive == true)
-            {//brick top
-                if (yPos + radius >= b.top && yPos + radius <= b.top + 2.1F && xPos >= b.left && xPos <= b.right)
-                {
-                    ySpeed = -iSpeed;//so that we have constant speeds.
-                    yPos -= 2;
-                    return true;
-                }//brick bot
-                if (yPos - radius <= b.bot  && yPos - radius >= b.bot -2.1F && xPos >= b.left && xPos <= b.right)
-                {
-                    ySpeed = iSpeed;
-                    yPos += 2;
-                    return true;
-                }//brick left
-                if (yPos + radius >= b.top && yPos - radius <= b.bot && xPos + radius >= b.left && xPos + radius <= b.left + 2.1F)
-                {
-                    xSpeed = -iSpeed;
-                    xPos -= 2;
-                    return true;
-                }//brick right
-                if (yPos + radius >= b.top && yPos - radius <= b.bot && xPos - radius >= b.right -2.1F  && xPos - radius <= b.right )
-                {
-                    xSpeed = iSpeed;
-                    xPos += 2;
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }*/
 
         //check if balls collide
         public bool checkBallCollision(Ball otherBall)
@@ -264,7 +215,7 @@ namespace Pool_Game
             double V1x = otherBall.xSpeed * cos + otherBall.ySpeed * sin;
             double V1y = otherBall.ySpeed * cos - otherBall.xSpeed * sin;
 
-            //collision reaction ELASTISK LIGNING I BOKA?, tror denne gjør at de ikke setter seg fast, må plusse på noe ekstra? eller ikke siden det er vel.
+            //collision reaction ELASTISK LIGNING
             double vxtotal = V0x - V1x;
             V0x = ((mass - otherBall.getMass()) * V0x + 2 * otherBall.getMass() * V1x) / (mass + otherBall.getMass());//new velocity x ball 1
             V1x = vxtotal + V0x; //new velocity x ball 2
@@ -278,60 +229,25 @@ namespace Pool_Game
             double B1newPosx = B1x * cos - B1y * sin;
             double B1newPosy = B1y * cos + B1x * sin;
 
-            //rot vel back?
+            //rot vel back
             double B0newVelx = V0x * cos - V0y * sin;
             double B0newVely = V0y * cos + V0x * sin;
 
             double B1newVelx = V1x * cos - V1y * sin;
             double B1newVely = V1y * cos + V1x * sin;
 
-            //update pos
-            otherBall.xPos = xPos + (float)B1newPosx;//is this just to set it out of the other balls radius?
+            //update position
+            otherBall.xPos = xPos + (float)B1newPosx;//is this just to set it out of the other balls's radius
             otherBall.yPos = yPos + (float)B1newPosy;
             xPos = xPos + (float)B0newPosx;//these 4 new positions will be a little "bigger" than when they entered. this is so that they wont stick. also, they point slightly away from each other.
             yPos = yPos + (float)B0newPosy;
 
-            //update vel - I WANT THEM TO HAVE PERMANENT SPEEDS if not, I can rearrange the code again.
-            //xSpeed = (float)B0newVelx > 0 ? 2 : -2;
+            //update speed
             xSpeed = (float)B0newVelx;
-            //ySpeed = (float)B0newVely > 0 ? 2 : -2;
             ySpeed = (float)B0newVely;
-            //otherBall.setXspeed((float)B1newVelx > 0 ? 2 : -2);
+
             otherBall.setXspeed((float)B1newVelx);
-            //otherBall.setYspeed((float)B1newVely > 0 ? 2 : -2);
             otherBall.setYspeed((float)B1newVely);
-
-            /*while (checkBallCollision(otherBall))//check if the balls are still colliding.
-            {
-                otherBall.xPos +=  (float)B1newPosx;
-                otherBall.yPos += (float)B1newPosy;
-                xPos = xPos + (float)B0newPosx;
-                yPos = yPos + (float)B0newPosy;
-            }*/
-
-
-
-            /* //old velocity
-             double V0Ball1x = xSpeed * cos;
-             double V0Ball1y = ySpeed * sin;
-             double V0Ball2x = otherBall.getXspeed() * cos;
-             double V0Ball2y = otherBall.getYspeed() * sin;
-
-             //new velocity
-             double V1Ball1x = ((mass - otherBall.getMass()) / (mass + otherBall.getMass())) * V0Ball1x + (2 * otherBall.getMass() / (mass + otherBall.getMass())) * V0Ball2x;
-             double V1Ball1y = (2 * mass / (mass + otherBall.getMass())) * V0Ball1x + ((otherBall.getMass() - mass) / (otherBall.getMass() + mass)) * V0Ball2x;
-             double V1Ball2x = V0Ball1y;
-             double V1Ball2y = V0Ball2y;
-
-             //set new velocity
-             xSpeed = (float)V1Ball1x;
-             ySpeed = (float)V1Ball1y;
-             xPos += xSpeed *3;
-             yPos += ySpeed *3;
-             otherBall.setXspeed((float)V1Ball2x);
-             otherBall.setYspeed((float)V1Ball2y);
-             otherBall.xPos += otherBall.xSpeed * 5;
-             otherBall.yPos += otherBall.ySpeed *5;*/
         }
 
 

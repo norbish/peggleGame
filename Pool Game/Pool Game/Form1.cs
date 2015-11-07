@@ -82,7 +82,7 @@ namespace Pool_Game
         Label ball3Vars = new Label();
         Label ball4Vars = new Label();
         
-        Paddle pad = new Paddle(padMidPos, padPosy, leftWall, rightWall, padHeight);
+        Paddle pad = new Paddle(padMidPos, padPosy, leftWall, rightWall, padHeight);//initiates this in the constructor, because it only needs ever to run once.
         public Form1()
         {
             this.DoubleBuffered = true;//potentially reduces flickering
@@ -109,64 +109,67 @@ namespace Pool_Game
         //UPDATE FUNCTION - the main method
         public void FixedUpdate(object sender, EventArgs e) // this is where everything happens
         {
-            Graphics drawing = Canvas.CreateGraphics();
-            drawing.Clear(Canvas.BackColor);
-            for (int b = 0; b < Ballz.Length; b++)
+            Graphics drawing = Canvas.CreateGraphics();//this is the main forms canvas
+            drawing.Clear(Canvas.BackColor);//this clears all the drawings, but also creates flickering. 
+
+            for (int b = 0; b < Ballz.Length; b++)//updates the balls' positions
             {
-                if (Ballz[b].inPlay)
+                if (Ballz[b].inPlay)//only updates the balls position if it is in play
                     Ballz[b].UpdateVars(topWall, botWall, leftWall, rightWall, padPosy, firstBallTempGravity);
                 else
                 {
-                    Ballz[b].setXspeed(0);
+                    Ballz[b].setXspeed(0);//ensures the balls won't move after deactivated.
                     Ballz[b].setYspeed(0);
                 }                
             }
             if (!hasStarted)//sets ball position to paddle position before game has started
             {
                 Ballz[0].xPos = pad.getX();
-                startBallspeedX = Int32.Parse(setBallSpeed.Text);
-                forceVal = -Int32.Parse(setForceVall.Text);// set minus for accuracy with canvas. + is -
-                drawVector(drawing);
+                startBallspeedX = Int32.Parse(setBallSpeed.Text);//sets ball speed
+                forceVal = -Int32.Parse(setForceVall.Text);// set the force value. minus for accuracy with canvas. + is -
+                drawVector(drawing); //calls the function that draws the vector line for the ball.
             }
             
-            updateBotPanelValues();
-            drawBalls(drawing);
-            drawPad(drawing);
-            drawBricks(drawing);
+            updateBotPanelValues();//updates the ball variables
+            drawBalls(drawing);//draws the balls
+            drawPad(drawing);//draws the paddle
+            drawBricks(drawing);//draws the bricks
             
-           CheckCollisions();//if this is inside loop, code doesnt work with less than 5 balls. 
+           CheckCollisions();//checks all the collisions in the game
         }
 
         //COLLISIONS METHOD
         public void CheckCollisions()
         {
-            for (int f = 0; f < Ballz.Length; f++)//num balls active instead?
-            {//check collision with PADDLE
+            for (int f = 0; f < numBallsActive; f++)//we do not update more balls than possibly active.
+            {
+                //check and resolve collision with PADDLE
                 Ballz[f].checkPadCollision(pad, padBounceSpeed);
                 
                 for (int s = f+1; s < Ballz.Length; s++)
-                {//check collision with BALLS
+                {
+                    //check collision with BALLS
                     if (Ballz[f].checkBallCollision(Ballz[s]))
-                    {//there is a collision
+                        //there is a collision. resolve it:
                         Ballz[f].calculateBallCollision(Ballz[s]);
-                    } 
                 }
                 for (int b = 0; b < Brickz.Length; b++)
-                {//check collisions with BRICKS
-                    if(Ballz[f].checkBrickCollision(Brickz[b]))//må endre til ballz.checkcollision.
-                    {// there is a collision
-
+                {
+                    //check collisions with BRICKS
+                    if(Ballz[f].checkBrickCollision(Brickz[b]))
+                    {
+                        // there is a collision:
                         Ballz[f].calculateBrickCollision(Brickz[b]);
-                        Brickz[b].isAlive = false;
-                        numBricksDestroyed += 1;
+                        Brickz[b].isAlive = false;//hides the brick
+                        numBricksDestroyed += 1;//adds to score:
                         score.Text = numBricksDestroyed.ToString();
 
-                        //check bricktype and react accordingly
+                        //check bricktype of destroyed brick and react accordingly
                         switch(Brickz[b].brickType)
                         {
-                            case 1: tempBrickNumber = b; tempBallNumber = f; DropNewBall(b, f); break;// drop ball on destroyed brick
-                            case 2: Ballz[f].setXspeed(Ballz[f].getXspeed() * (float).5); Ballz[f].setYspeed(Ballz[f].getYspeed() * (float).5); break;// set slow speed on ball
-                            case 3: Ballz[f].setXspeed(Ballz[f].getXspeed() * (float)2); Ballz[f].setYspeed(Ballz[f].getYspeed() * (float)2); break;// set fast speed on ball
+                            case 1: tempBrickNumber = b; tempBallNumber = f; DropNewBall(b, f); break;// drop a new ball on destroyed brick
+                            case 2: Ballz[f].setXspeed(Ballz[f].getXspeed() * .5F); Ballz[f].setYspeed(Ballz[f].getYspeed() * .5F); break;// set slow speed on ball
+                            case 3: Ballz[f].setXspeed(Ballz[f].getXspeed() * 1.5F); Ballz[f].setYspeed(Ballz[f].getYspeed() * 1.5F); break;// set fast speed on ball
                             default: break;
                         }
                         
@@ -179,9 +182,7 @@ namespace Pool_Game
         //DRAWINGS  - BALLS PAD AND BRICKS
         public void drawBalls(Graphics drawing)
         {
-            
-           
-            for(int b = 0; b < numBallsActive; b++)//can be removed if drawBalls() is put in for loop
+            for(int b = 0; b < numBallsActive; b++)//never draws more than the number of balls that have been active before.
                 switch(b)
                 {
                     case 0: drawing.FillEllipse(Brushes.Black, Ballz[b].getX() - Ballz[b].getRadius(), Ballz[b].getY() - Ballz[b].getRadius(), Ballz[b].getRadius() * 2, Ballz[b].getRadius() * 2); break;
@@ -193,19 +194,19 @@ namespace Pool_Game
         }
         public void drawPad(Graphics drawing)
         {
-            drawing.FillRectangle(Brushes.Red, pad.getLL(), padPosy, pad.getML() - pad.getLL(), padHeight);//height = 5 
-            drawing.FillRectangle(Brushes.Yellow, pad.getML(), padPosy, pad.getMR() - pad.getML(), padHeight);//height = 5 REAL POSITION
-            drawing.FillRectangle(Brushes.Blue, pad.getMR()     , padPosy, pad.getRR() - pad.getMR(), padHeight);//height = 5
+            drawing.FillRectangle(Brushes.Red, pad.getLL(), padPosy, pad.getML() - pad.getLL(), padHeight);
+            drawing.FillRectangle(Brushes.DarkBlue, pad.getML(), padPosy, pad.getMR() - pad.getML(), padHeight);//this one is pad's middle position.
+            drawing.FillRectangle(Brushes.Red, pad.getMR()     , padPosy, pad.getRR() - pad.getMR(), padHeight);
         }
-        //draw bricks if not deactivated.
+
         public void drawBricks(Graphics drawing)
         {
-            Brush normal = Brushes.Gray;
+            Brush normal = Brushes.Gray;//change these to change colors.
             Brush newBall = Brushes.Green;
             Brush slowDown = Brushes.Blue;
-            Brush speedup = Brushes.Orange;
+            Brush speedup = Brushes.Red;
             
-            for (int i = 0; i < Brickz.Length; i++)
+            for (int i = 0; i < Brickz.Length; i++)//iterates through, draws bricks depending on whether active or not, and according to brick type(color, speed/new-ball)
             {
                 if (Brickz[i].isAlive && Brickz[i].brickType == 0)//normal balls/gray
                 {
@@ -219,7 +220,7 @@ namespace Pool_Game
                 {
                     drawing.FillEllipse(slowDown, Brickz[i].getX() - Brickz[i].getWidth() / 2, Brickz[i].getY() - Brickz[i].getHeight() / 2, Brickz[i].getWidth()*2, Brickz[i].getHeight()*2);
                 }
-                if (Brickz[i].isAlive && Brickz[i].brickType == 3)//fast ball / orange
+                if (Brickz[i].isAlive && Brickz[i].brickType == 3)//fast ball / red
                 {
                     drawing.FillEllipse(speedup, Brickz[i].getX() - Brickz[i].getWidth() / 2, Brickz[i].getY() - Brickz[i].getHeight() / 2, Brickz[i].getWidth()*2, Brickz[i].getHeight()*2);
                 }
@@ -228,29 +229,30 @@ namespace Pool_Game
 
         public void drawVector(Graphics drawing)
         {
-            PointF[] Vector = new PointF[40];
-            if(!hasStarted)
-            for (int i = 0; i < Vector.Length; i++)
-                Vector[i] = new PointF( Ballz[0].getX() + (float)i * startBallspeedX , Ballz[0].getY() + (float)i * -Math.Abs(forceVal));
+            PointF[] Vector = new PointF[40];//set up array
+            if(!hasStarted)//before you press start
+            for (int i = 0; i < Vector.Length; i++)//iterate through 
+                Vector[i] = new PointF( Ballz[0].getX() + (float)i * startBallspeedX , Ballz[0].getY() + (float)i * -Math.Abs(forceVal));//set up the points according to ball position and x/yspeed
 
             Pen pen = new Pen(Color.Red);
-            drawing.DrawCurve(pen, Vector);
+            drawing.DrawCurve(pen, Vector);//draw the points on canvas
         }
-        //initialize BALLS AND BRICKS
+
         public void InitializeBrickz()
         {
             //
-            for(int i = 0; i<Brickz.Length; i++)//SETS LOCATION AND TYPES OF BRICKS. initializing.
-            {//if I want a special brick, make a small if statement in between.
+            for(int i = 0; i<Brickz.Length; i++)//SETS LOCATION, SIZE, AND TYPES OF BRICKS. initializing.
+            {
                 //ROW ONE
                 if (i < 1)//the first brick
+                    //              (xPos + int for not sticking,    yPos + int for bricks not sticking, height,width, bricktype, is active?)
                     Brickz[i] = new Brick(brickGroupPosX + i * brickDistanceX, brickGroupPosY, brickRadius, brickRadius, slowBalls, true);//slow balls / blue
                 if (i >= 1 && i < 7)
                     Brickz[i] = new Brick(brickGroupPosX + i * brickDistanceX + i, brickGroupPosY, brickRadius, brickRadius, normal, true);//normal / gray
                 if (i >= 7 && i < 14)
                     Brickz[i] = new Brick(brickGroupPosX+250 + i * brickDistanceX + i, brickGroupPosY, brickRadius, brickRadius, normal, true);//normal / gray
                 if (i >= 14 && i < 15)
-                    Brickz[i] = new Brick(brickGroupPosX+250 + i * brickDistanceX + i, brickGroupPosY, brickRadius, brickRadius, fastBalls, true);//fast balls / orange
+                    Brickz[i] = new Brick(brickGroupPosX+250 + i * brickDistanceX + i, brickGroupPosY, brickRadius, brickRadius, fastBalls, true);//fast balls / red
 
                 // ROW TWO
                 else if (i >= 15 && i < 16)
@@ -264,26 +266,24 @@ namespace Pool_Game
 
                 //ROW THREE
                 else if (i >= 30 && i < 31)
-                    Brickz[i] = new Brick(brickGroupPosX + 40 + (i - 30) * brickDistanceX + (i - 30), brickGroupPosY + 2 * brickDistanceY, brickRadius, brickRadius, slowBalls, true);//normal / gray
+                    Brickz[i] = new Brick(brickGroupPosX + 40 + (i - 30) * brickDistanceX + (i - 30), brickGroupPosY + 2 * brickDistanceY, brickRadius, brickRadius, slowBalls, true);//slow / blue
                 else if (i >= 31 && i < 37)
                     Brickz[i] = new Brick(brickGroupPosX + 40 + (i - 30) * brickDistanceX + (i - 30), brickGroupPosY + 2 * brickDistanceY , brickRadius, brickRadius, normal, true);//normal / gray
                 else if (i >= 37 && i < 44)
                     Brickz[i] = new Brick(brickGroupPosX + 210 + (i - 30) * brickDistanceX + (i - 30), brickGroupPosY + 2 * brickDistanceY, brickRadius, brickRadius, normal, true);//normal / gray
                 else if (i >= 44 && i < 45)
-                    Brickz[i] = new Brick(brickGroupPosX + 210 + (i - 30) * brickDistanceX + (i - 30), brickGroupPosY + 2 * brickDistanceY, brickRadius, brickRadius, fastBalls, true);//normal / gray
+                    Brickz[i] = new Brick(brickGroupPosX + 210 + (i - 30) * brickDistanceX + (i - 30), brickGroupPosY + 2 * brickDistanceY, brickRadius, brickRadius, fastBalls, true);//fast / red
 
-                //ROW FOUR - not existing yet
-                else if (i >= 45 && i < 60)//last bricks
+                //ROW FOUR - not existing. possible to add new bricks. 
+                else if (i >= 45 && i < 60)
                     Brickz[i] = new Brick(brickGroupPosX + (i - 45) * brickRadius + (i - 45), brickGroupPosY + 3 * brickRadius + 3, brickRadius, brickRadius, normal, true);//normal / gray
-                //                                        (xPos + int for not sticking,  yPos + int for bricks not sticking  ,   height,    width, bricktype, is active?)
             }
         }
 
         public void InitializeBallz()
         {
-            Ballz[0] = new Ball(pad.getX(), padPosy-10, startBallspeedX, forceVal, radius, false, 0);//xPos, yPos, xSpeed,  ySpeed, radius, inPlay
-            Ballz[1] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
-            
+            Ballz[0] = new Ball(pad.getX(), padPosy-10, startBallspeedX, forceVal, radius, false, 0);//xPos, yPos, xSpeed,  ySpeed, radius, inPlay, gravity value
+            Ballz[1] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);//all other balls start off to the bottom right corner.
             Ballz[2] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
             Ballz[3] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
             Ballz[4] = new Ball(1000, botWall - radius, 0, 0, radius, false,gravity);
@@ -292,14 +292,14 @@ namespace Pool_Game
         //drop a new ball from CheckCollision()
         public void DropNewBall(int b, int f)
         {
-            int count = 0;
+           int count = 0;//used count and while loop since the "count" must be changed when a ball is being activated, so that we don't put out more than one ball.
            while(count < Ballz.Length)
             {
-                if(!Ballz[count].inPlay)
+                if(!Ballz[count].inPlay)//if the ball is not yet in play, we can deploy it.
                 {
-                    Ballz[count] = new Ball(Brickz[b].getX(),Brickz[b].getY(), Ballz[f].getXspeed() , Ballz[f].getYspeed(), radius, true, gravity);
-                    numBallsActive += 1;
-                    count = Ballz.Length;
+                    Ballz[count] = new Ball(Brickz[b].getX(),Brickz[b].getY(), Ballz[f].getXspeed() , Ballz[f].getYspeed(), radius, true, gravity);//sets new balls' position(the brick), and speeds(colliding ball's speed)
+                    numBallsActive += 1;//keep track for update purposes
+                    count = Ballz.Length;//exits loop
                 }
                 count++;
             }
@@ -308,35 +308,35 @@ namespace Pool_Game
         //BUTTONS
         public void restartGame(object sender, EventArgs e)
         {
-            InitializeBallz();//add the balls
-            InitializeBrickz();//re draws the bricks
-            score.Text = "0";
-            numBricksDestroyed = 0;//resets score
-            hasStarted = false;//stops game
-            firstBallTempGravity = 0;
+            InitializeBallz();//re-starts the balls
+            InitializeBrickz();//re-draws the bricks
+            score.Text = "0"; // reset score text
+            numBricksDestroyed = 0;//reset score var
+            numBallsActive = 1;
+            hasStarted = false;//stops game, lets ball 1 be right over paddle.
+            firstBallTempGravity = 0;//sets the first balls gravity to 0, so it doesn't move before game has started.
         }
         public void StartButton(object sender, EventArgs e)
         {
-            //startBallspeedX = Int32.Parse(setBallSpeed.Text);//
-            Timer1.Interval = Int32.Parse(setSimSpeed.Text);//get string from textbox to the timer interval to set simulation speed.
-            //forceVal = - Int32.Parse(setForceVall.Text);// set minus for accuracy with canvas. + is -
-            gravity =  float.Parse(setGravityVal.Text);
-            Ballz[0].setXspeed(startBallspeedX);
-            Ballz[0].setForce(forceVal);
-            Ballz[0].inPlay = true;
-            firstBallTempGravity = gravity;
-            hasStarted = true;
+            
+            Timer1.Interval = Int32.Parse(setSimSpeed.Text);//user inputs simulation speed
+            gravity =  float.Parse(setGravityVal.Text);//user inputs gravity
+            Ballz[0].setXspeed(startBallspeedX);//sets user defined x speed, ball will start moving.
+            Ballz[0].setForce(forceVal);//sets user defined force(Y-speed), ball will start moving.
+            Ballz[0].inPlay = true;// update loops including ball 1 will start running. 
+            firstBallTempGravity = gravity;//Sets the first ball's gravity so "physics" will start pulling it down.
+            hasStarted = true;//game has started. vector will disappear, ball will not follow pad, etc.
         }
         public void pauseGame(object sender, EventArgs e)
         {
             if(Timer1.Enabled)
-                Timer1.Stop();
+                Timer1.Stop();//staps the timer to pause the game.
         }
         public void resumeGame(object sender, EventArgs e)
         {
             if (!Timer1.Enabled)
             { 
-                Timer1.Start(); //Timer1.Tick += new EventHandler(FixedUpdate);//make timer time.
+                Timer1.Start(); //starts the timer to resume the game.
             }
         }
 
@@ -428,8 +428,6 @@ namespace Pool_Game
         }
         public void BotPanelValues()
         {
-            //ball 0
-
             ballLabels.Font = new Font(ballLabels.Font.FontFamily, 10);
             ballLabels.Left = 80;
             ballLabels.Text = "Ball1\t\t Ball2\t\tBall3\t\tBall4\t\tBall5".Replace("\t", "                     ");
@@ -454,7 +452,7 @@ namespace Pool_Game
             ball3Canvas.Controls.Add(ball3Vars);
             ball4Canvas.Controls.Add(ball4Vars);
         }
-        public void updateBotPanelValues()
+        public void updateBotPanelValues()//just type in if more variables are needed.
         {
             
          ball0Vars.Text = "x position: " + (int)Ballz[0].getX() + "\ny position: " + (int)Ballz[0].getY() + "\nmass:        " + Ballz[0].getMass() + "\nx speed:    " + (int)Ballz[0].getXspeed() + "\ny speed:    " + -(int)Ballz[0].getYspeed() + "\nG Force:   " + Ballz[0].getForce(); 

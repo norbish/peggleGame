@@ -27,7 +27,8 @@ namespace Pool_Game
         }
        
         public void updateVars(bool moveRight)
-        {   //oh lord this is so much better than the long if sentences!!
+        {   
+            //oh lord this is so much better than the long if sentences!!
             xPos += moveRight ? movespeed : -movespeed;
 
             updatePoints(xPos);
@@ -35,10 +36,8 @@ namespace Pool_Game
         public void updatePoints(float x)//so i dont have to change them in updateVars and Paddle.
         {
             leftEndL = x - 50;
-            //leftEndR = x - 30;//remove
             middleL = x - 40;
             middleR = x + 40;
-            //rightEndL = x + 30;//remove
             rightEndR = x + 50;
         }
 
