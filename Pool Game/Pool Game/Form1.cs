@@ -21,7 +21,7 @@ namespace Pool_Game
         static float padPosy = 530;
         static float padHeight = 15;
         static float gravity = .5981F;
-        float firstBallTempGravity = 0;
+        float TempGravity = 0;
 
         float brickGroupPosX = 10;
         float brickGroupPosY = 150;
@@ -115,7 +115,7 @@ namespace Pool_Game
             for (int b = 0; b < Ballz.Length; b++)//updates the balls' positions
             {
                 if (Ballz[b].inPlay)//only updates the balls position if it is in play
-                    Ballz[b].UpdateVars(topWall, botWall, leftWall, rightWall, padPosy, firstBallTempGravity);
+                    Ballz[b].UpdateVars(topWall, botWall, leftWall, rightWall, padPosy, TempGravity);
                 else
                 {
                     Ballz[b].setXspeed(0);//ensures the balls won't move after deactivated.
@@ -314,7 +314,7 @@ namespace Pool_Game
             numBricksDestroyed = 0;//reset score var
             numBallsActive = 1;
             hasStarted = false;//stops game, lets ball 1 be right over paddle.
-            firstBallTempGravity = 0;//sets the first balls gravity to 0, so it doesn't move before game has started.
+            TempGravity = 0;//sets the first balls gravity to 0, so it doesn't move before game has started.
         }
         public void StartButton(object sender, EventArgs e)
         {
@@ -324,7 +324,7 @@ namespace Pool_Game
             Ballz[0].setXspeed(startBallspeedX);//sets user defined x speed, ball will start moving.
             Ballz[0].setForce(forceVal);//sets user defined force(Y-speed), ball will start moving.
             Ballz[0].inPlay = true;// update loops including ball 1 will start running. 
-            firstBallTempGravity = gravity;//Sets the first ball's gravity so "physics" will start pulling it down.
+            TempGravity = gravity;//Sets the first ball's gravity so "physics" will start pulling it down.
             hasStarted = true;//game has started. vector will disappear, ball will not follow pad, etc.
         }
         public void pauseGame(object sender, EventArgs e)
