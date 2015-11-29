@@ -10,12 +10,11 @@ namespace Pool_Game
     {
         public float xPos, yPos;
         public float xSpeed, ySpeed;
-        public float lastxSpeed = 0, lastySpeed = 0;
         private float radius;
         private float mass = 1F;
         private float xDist, yDist;
         public bool inPlay = false;
-        private float ForcePositionY = 0;
+        private float ballForcey = 0;
         private float accelerationY;
         
         public Ball(float x,float y,float xS,float yS, float r, bool inPlay, float acceleration)
@@ -28,15 +27,12 @@ namespace Pool_Game
             this.inPlay = inPlay;//check if ball is in use
             accelerationY = acceleration;
         }
-        
         //collision with wall and speeds
         public void UpdateVars(float TopWall, float BotWall,float LeftWall, float RightWall, float padPosy,float gravity)//updates ball's position 
         {
-            accelerationY += gravity;//acceleration Yvelocity += gravity constant
-            ForcePositionY += accelerationY;//ball position Y += acceleration yVelocity
-            accelerationY = ForcePositionY / -mass; //moving according to mass.
-
-            ySpeed -=  accelerationY; //adding acceleration to movement
+            accelerationY += gravity;
+            ballForcey += accelerationY;
+            accelerationY = ballForcey / -mass; //adding gravity/acceleration to game
 
             if(Math.Abs(xSpeed) > 12)//speed limit
             {
@@ -44,7 +40,7 @@ namespace Pool_Game
             }
             xPos += xSpeed;//add friction here for pool game
             
-           
+            ySpeed -=  accelerationY; //adding acceleration to movement
 
             if (Math.Abs(ySpeed) > 12)//speed limit
             {
@@ -64,6 +60,7 @@ namespace Pool_Game
             {
                 yPos = BotWall - radius;
                 ySpeed = 0;
+                //inPlay = false;
                 if (xPos >= RightWall - radius)
                 {
                     xSpeed = 0;
@@ -94,7 +91,7 @@ namespace Pool_Game
                 xSpeed += -iSpeed * 1.5F;
                 xSpeed = xSpeed < -12 ? -12 : xSpeed * 1.5F;
 
-
+                ballForcey = -accelerationY;
                 ySpeed = ySpeed > 12 ? -12 : -ySpeed * 1.5F;
             }
              if ((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos + radius <= pad.getY() + pad.getHeight()/2) && (xPos + radius >= pad.getML() && xPos - radius <= pad.getMR()))
@@ -102,7 +99,7 @@ namespace Pool_Game
                 if (ySpeed < iSpeed )
                     ySpeed = iSpeed;
 
-
+                ballForcey = -accelerationY;
                 ySpeed = -ySpeed;
             }
              if((yPos + radius >= pad.getY() - pad.getHeight()/2 && yPos - radius <= pad.getY() + pad.getHeight()/2) && (xPos > pad.getMR() && xPos - radius <= pad.getRR()))
@@ -110,7 +107,7 @@ namespace Pool_Game
                 xSpeed += iSpeed * 1.5F;
                 xSpeed = xSpeed > 12 ? 12 : xSpeed * 1.5F;
 
-
+                ballForcey = -accelerationY;
                 ySpeed = ySpeed > 12 ? -12 : -ySpeed * 1.5F;
                 
             }   
@@ -290,11 +287,11 @@ namespace Pool_Game
         }
         public void setForce(float force)
         {
-            this.ForcePositionY = force;
+            this.ballForcey = force;
         }
         public float getForce()
         {
-            return accelerationY;
+            return ballForcey;
         }
         public void setGravity(float acceleration)
         {
